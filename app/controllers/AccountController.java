@@ -24,6 +24,11 @@ public class AccountController extends Controller {
 
     private final FormFactory formFactory;
     private Transaction tx = null;
+    private UsersEntity loggedInUser;
+
+    public UsersEntity getLoggedInUser() {
+        return loggedInUser;
+    }
 
     @Inject
     public AccountController(final FormFactory formFactory) {
@@ -83,9 +88,16 @@ public class AccountController extends Controller {
         return ok(views.html.login.render("Please provide your credentials"));
     }
 
+    public void setLoggedInUser(UsersEntity loggedInUser) {
+        session("id", String.valueOf(loggedInUser.getId()));
+        session("username", String.valueOf(loggedInUser.getUsername()));
+        session("isActivated", String.valueOf(loggedInUser.isActivated()));
+        session("isRecovering", String.valueOf(loggedInUser.isRecovering()));
+        session("loginAttemptCount", String.valueOf(loggedInUser.getLoginAttemptCount()));
+    }
+
     public static boolean isLoggedIn() {
-        //TODO test the isempty method
-        if (session().get("user") != null) {
+        if (session().get("id") != null) {
             return true;
         }
         return false;
@@ -95,7 +107,6 @@ public class AccountController extends Controller {
         //Discard the logged out user's session.
         session().clear();
     }
-
 
     public Result authenticate() {
 
@@ -118,12 +129,10 @@ public class AccountController extends Controller {
                     if (BCrypt.checkpw(userForm.get().getPassword(), userFromDB.get(0).getPassword())) {
                         //As the Session is just a Cookie, it is also just an HTTP header
                         //but Play provides a helper method to store a session value
-                        //TODO add more user properties
-                        session("user", userFromDB.get(0).getUsername());
+                        setLoggedInUser(userFromDB.get(0));
                         return userSettings();
                     }
                 }
-
 
             } catch (HibernateException e) {
                 if (tx != null) tx.rollback();
@@ -140,7 +149,7 @@ public class AccountController extends Controller {
 
         //User persistence
         //TODO add more user properties
-        String username = session().get("user");
+        String username = session().get("username");
         if (username != null) {
             return ok(views.html.user_settings.render(username));
         }
@@ -148,13 +157,53 @@ public class AccountController extends Controller {
     }
 
     public Result recoverAccount() {
-        if (isLoggedIn())
-            return badRequest(views.html.unauthorized.render("You are already logged in"));
+       // if (isLoggedIn())
+           // return badRequest(views.html.unauthorized.render("You are already logged in"));
 
-        return ok(views.html.recover.render());
+        return ok(views.html.recoverS1.render());
     }
 
-    public void requestPasswordReset(){
+    public Result requestPasswordReset() {
+
+        //TODO email setup. Send the password reset token to the requested email
+        String getGeneratedUsernamefromDB = "";
+
+        UUID token = UUID.randomUUID();
+
+        //Save the token in the db for later confirmation
+
+        Form<LogInUser> emailRequest = formFactory.form(LogInUser.class).bindFromRequest();
+
+        if (emailRequest.errors().size() == 0) {
+
+            Session DBSession = DB.getSession();
+
+            try {
+
+                tx = DBSession.beginTransaction();
+
+                List<UsersEntity> userFromDB = DBSession.createQuery("from UsersEntity where username = :username")
+                        .setParameter("username", emailRequest.get().getUsername()).list();
+                DBSession.flush();
+                tx.commit();
+
+                if (userFromDB.size() == 0) {
+                    //TODO send the email
+                } else {
+                    return badRequest(views.html.unauthorized.render("You are unauthorized to access this page. Log in first"));
+                }
+
+            } catch (HibernateException e) {
+                if (tx != null) tx.rollback();
+                e.printStackTrace();
+            } finally {
+                DBSession.close();
+            }
+        }
+        return badRequest(views.html.unauthorized.render("You are unauthorized to access this page. Log in first"));
+    }
+
+    public void resetPassword() {
 
         String getGeneratedUsernamefromDB = "";
 
@@ -165,6 +214,5 @@ public class AccountController extends Controller {
 
         //TODO email setup. Send the password reset token to the requested email
     }
-
 
 }

@@ -5,9 +5,12 @@
         <title>Title</title>
     </head>
     <body>
-    @helper.form(action = routes.AccountController.recoverAccount()){
-        <label for="email">Email:</label>
-        <input name="email">
+
+    @helper.form(action = routes.AccountController.requestPasswordReset()){
+        <label for="username">Email:</label>
+        <input name="username">
+        <label for="password">password:</label>
+        <input name="password">
         <br>
         <button type="submit">Request Reset</button>
     }
