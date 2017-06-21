@@ -3,6 +3,7 @@ package models;
 import play.data.validation.Constraints;
 
 import javax.persistence.*;
+import java.sql.Timestamp;
 
 /**
  * Created by jorda on 2017-06-07.
@@ -16,6 +17,8 @@ public class UsersEntity {
     private boolean isActivated;
     private boolean isRecovering;
     private int loginAttemptCount;
+    private String resetToken;
+    private Timestamp resetTokenLife;
 
     @Id
     @Column(name = "id")
@@ -104,5 +107,25 @@ public class UsersEntity {
         result = 31 * result + (isRecovering ? 1 : 0);
         result = 31 * result + loginAttemptCount;
         return result;
+    }
+
+    @Basic
+    @Column(name = "resetToken")
+    public String getResetToken() {
+        return resetToken;
+    }
+
+    public void setResetToken(String resetToken) {
+        this.resetToken = resetToken;
+    }
+
+    @Basic
+    @Column(name = "resetTokenLife")
+    public Timestamp getResetTokenLife() {
+        return resetTokenLife;
+    }
+
+    public void setResetTokenLife(Timestamp resetTokenLife) {
+        this.resetTokenLife = resetTokenLife;
     }
 }

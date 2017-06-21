@@ -13,7 +13,6 @@ public class CreateUser {
     public static final String ERROR_PASSWORD_MISMATCH = "The passwords do not match or not required length or user is not long enough FIX";
     public static final String USER_CREATE_SUCCESS = "User successfully created!";
 
-
     @Constraints.Required
     @Constraints.MinLength(5)
     private String username;

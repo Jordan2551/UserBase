@@ -6,13 +6,12 @@
     </head>
     <body>
 
-    @helper.form(action = routes.AccountController.requestPasswordReset()){
+    @helper.form(action = routes.AccountController.requestPasswordReset()) {
         <label for="username">Email:</label>
         <input name="username">
-        <label for="password">password:</label>
-        <input name="password">
         <br>
         <button type="submit">Request Reset</button>
     }
+
     </body>
 </html>

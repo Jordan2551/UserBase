@@ -5,28 +5,24 @@
   <head>
     <meta charset="utf-8">
     <title>Play REST API</title>
-      @message
-  </head>
-    <p>duh shit</p>
-
+    @message
+    </head>
   <body>
-<p>duh shit</p>
     @helper.form(action = routes.AccountController.createAccount()){
-        <label for="username">Username:</label>
-        <input name="username">
-        <br>
-        <label for="password">Password:</label>
-        <input name="password">
-        <br>
-        <label for="confirmPassword">Confirm Password:</label>
-        <input name="confirmPassword">
-        <br>
-        <button type="submit">Create</button>
+      <label for="username">Username:</label>
+      <input name="username">
+      <br>
+      <label for="password">Password:</label>
+      <input name="password">
+      <br>
+      <label for="confirmPassword">Confirm Password:</label>
+      <input name="confirmPassword">
+      <br>
+      <button type="submit">Create</button>
     }
 
-      <a href="@routes.AccountController.logIn()">Log-in</a>
-      <a href="@routes.AccountController.recoverAccount()">Forgot Password?</a>
-
+    <a href="@routes.AccountController.logIn()">Log-in</a>
+    <a href="@routes.AccountController.passwordReset1()">Forgot Password?</a>
 
   </body>
 </html>

@@ -764,7 +764,7 @@ public class BCrypt {
 			String try_pw = hashpw(plaintext, hashed);
 			hashed_bytes = hashed.getBytes("UTF-8");
 			try_bytes = try_pw.getBytes("UTF-8");
-		} catch (UnsupportedEncodingException uee) {
+		} catch (Exception uee) {
 			return false;
 		}
 		if (hashed_bytes.length != try_bytes.length)

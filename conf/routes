@@ -3,14 +3,17 @@
 # ~~~~
 
 # An example controller showing a sample home page
-GET    /                           controllers.HomeController.index()
-GET    /foo                        controllers.HomeController.index()
-POST   /create                     controllers.AccountController.createAccount()
-GET    /login                      controllers.AccountController.logIn()
-POST   /login                      controllers.AccountController.authenticate()
-GET    /settings                   controllers.AccountController.userSettings()
-GET    /recover                    controllers.AccountController.recoverAccount()
-POST   /recover                    controllers.AccountController.requestPasswordReset()
+GET         /                    controllers.HomeController.index()
+POST        /create              controllers.AccountController.createAccount()
+GET         /login               controllers.AccountController.logIn()
+POST        /login               controllers.AccountController.authenticate()
+GET         /settings            controllers.AccountController.userSettings()
+GET         /password            controllers.AccountController.passwordReset1()
+POST        /password            controllers.AccountController.requestPasswordReset()
+GET         /reset/:token/:id    controllers.AccountController.passwordReset2(token: String, id: Long)
+POST        /reset/:token/:id    controllers.AccountController.resetPassword(token: String, id: Long)
+GET         /test                controllers.AccountController.test()
+
 
 # Map static resources from the /public folder to the /assets URL path
-GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)
+GET         /assets/*file        controllers.Assets.versioned(path="/public", file: Asset)
