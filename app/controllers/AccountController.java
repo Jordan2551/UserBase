@@ -1,10 +1,7 @@
 package controllers;
 
 import com.google.inject.Inject;
-import dataModels.user.ConfirmPassword;
-import dataModels.user.CreateUser;
-import dataModels.user.LogInUser;
-import dataModels.user.RecoverUser;
+import dataModels.user.*;
 import database.DB;
 import emails.SendGridEmail;
 import models.UsersEntity;
@@ -29,6 +26,9 @@ import java.util.UUID;
  * Created by jorda on 2017-06-07.
  */
 //TODO SSL WITH MYSQL, HTTPS WHERE NEEDED
+//TODO should sessions expire?
+//TODO should I only create the account after the code is verified? IS that even possibly given that the data has to exist somewhere. Maybe add a task that clears inactivated users after a certain timeframe OR the ability to resend a new token
+//TODO make more elegant with flexible data binds
 
 enum passwordTokenAuthorizeResult {
     authorized, tokenExpired, invalidToken, error
@@ -72,7 +72,7 @@ public class AccountController extends Controller {
                 //Check that the email is not already being used in the database
                 for (UsersEntity userFromDB : usersFromDB) {
                     if (Objects.equals(userFromDB.getUsername().toLowerCase(), userForm.get().getUsername().toLowerCase())) {
-                        return badRequest(views.html.index.render(CreateUser.ERROR_USER_EXISTS));
+                        return badRequest(views.html.index.render(UserMessages.ERROR_ACCOUNT_DOESNT_EXIST));
                     }
                 }
 
@@ -92,7 +92,6 @@ public class AccountController extends Controller {
                 DBSession.flush();
                 tx.commit();
 
-                //TODO should I only create the account after the code is verified? IS that even possibly given that the data has to exist somewhere. Maybe add a task that clears inactivated users after a certain timeframe OR the ability to resend a new token
                 //Unfortunately I can only save the object first so I can get the id to later send in the email. The task implementation above is the solution incase the mailing service fails.
                 SendGridEmail.sendAccountCreationEmail(user.getUsername(), token, user.getId());
 
@@ -107,7 +106,7 @@ public class AccountController extends Controller {
             return badRequest(views.html.index.render(printValidationErrors(userForm.errors())));
         }
 
-        return ok(views.html.index.render(CreateUser.USER_CREATE_SUCCESS));
+        return ok(views.html.index.render(UserMessages.USER_CREATE_SUCCESS));
 
     }
 
@@ -132,10 +131,12 @@ public class AccountController extends Controller {
                         DBSession.saveOrUpdate(userFromDB.get(0));
                         DBSession.flush();
                         tx.commit();
-                        return ok(views.html.index.render("Account successfully activated!"));
+
+                        return ok(views.html.index.render(UserMessages.USER_ACCOUNT_ACTIVATED_SUCCESS));
+
                     }
                 } else {
-                    return badRequest(views.html.index.render("Error authenticating code"));
+                    return badRequest(views.html.index.render(UserMessages.ERROR_TOKEN_AUTH));
                 }
 
             } catch (HibernateException e) {
@@ -178,11 +179,10 @@ public class AccountController extends Controller {
     //Determines user access
     public Result authenticate() {
 
-        //TODO make more elegant with flexible data binds
         Form<LogInUser> userForm = formFactory.form(LogInUser.class).bindFromRequest();
 
         if (!userForm.hasErrors()) {
-            //Authenticate user and pw
+
             Session DBSession = DB.getSession();
 
             try {
@@ -199,11 +199,11 @@ public class AccountController extends Controller {
                         setLoggedInUser(userFromDB.get(0));
                         return userSettings();
                     } else
-                        return badRequest(views.html.login.render("Account is not activated"));
+                        return badRequest(views.html.login.render(UserMessages.ERROR_ACCOUNT_NOT_ACTIVATED));
                 }
 
                 else{
-                    return badRequest(views.html.login.render("Your username or password is not correct"));
+                    return badRequest(views.html.login.render(UserMessages.ERROR_USER_OR_PASSWORD_INVALID));
                 }
 
             } catch (HibernateException e) {
@@ -225,12 +225,11 @@ public class AccountController extends Controller {
     public Result userSettings() {
 
         //User persistence
-        //TODO add more user properties
         String username = session().get("username");
         if (username != null) {
             return ok(views.html.user_settings.render(username));
         }
-        return badRequest(views.html.unauthorized.render("You are unauthorized to access this page. Log in first"));
+        return badRequest(views.html.unauthorized.render(UserMessages.ERROR_NO_ACCESS));
     }
 
     public Result passwordReset1() {
@@ -241,7 +240,6 @@ public class AccountController extends Controller {
 
     public Result requestPasswordReset() {
 
-        //TODO the email with password provided must result in a get request with the generated token. Set the routing for it and define the action
         //Save the token in the db for later confirmation
         Form<RecoverUser> emailRequest = formFactory.form(RecoverUser.class).bindFromRequest();
 
@@ -278,16 +276,16 @@ public class AccountController extends Controller {
                             DBSession.flush();
                             tx.commit();
 
-                            return badRequest(views.html.unauthorized.render("Password request sent! Check your email"));
+                            return badRequest(views.html.unauthorized.render(UserMessages.USER_PASSWORD_RESET_REQUEST));
 
                         }
                     }
                     else{
-                        return badRequest(views.html.unauthorized.render("Account is not activated"));
+                        return badRequest(views.html.unauthorized.render(UserMessages.ERROR_ACCOUNT_NOT_ACTIVATED));
                     }
 
                 } else {
-                    return badRequest(views.html.unauthorized.render("User does not exist"));
+                    return badRequest(views.html.unauthorized.render(UserMessages.ERROR_ACCOUNT_DOESNT_EXIST));
                 }
 
             } catch (HibernateException e) {
@@ -306,9 +304,6 @@ public class AccountController extends Controller {
 
     }
 
-    //TODO is putting the id a good idea?
-    //TODO through https?
-    //TODO should the token expire as soon as I land on the reset page for the first time? Check this with other sites
     public Result passwordReset2(String token, Long id) {
 
         //Authorize the token and information
@@ -316,7 +311,7 @@ public class AccountController extends Controller {
             case authorized:
                 return ok(views.html.reset.render(token, id));
             case tokenExpired:
-                return badRequest(views.html.unauthorized.render("The token has expired. ---ADD LINK TO RESET PASSWORD PAGE AGAIN---"));
+                return badRequest(views.html.unauthorized.render(UserMessages.ERROR_TOKEN_EXPIRED));
             case invalidToken:
                 return badRequest(views.html.unauthorized.render("Invalid token, user doesn't exist or account is not recovering. ---CHANGE THIS ERROR IN THE FUTURE---"));
         }
@@ -357,7 +352,7 @@ public class AccountController extends Controller {
                         DBSession.flush();
                         tx.commit();
 
-                        return ok(views.html.index.render("New password successfully set!"));
+                        return ok(views.html.index.render(UserMessages.USER_NEW_PASSWORD_SET_SUCCESS));
 
                     } catch (HibernateException e) {
                         if (tx != null) tx.rollback();
@@ -367,9 +362,9 @@ public class AccountController extends Controller {
                     }
 
                 case tokenExpired:
-                    return badRequest(views.html.unauthorized.render("The token has expired. ---ADD LINK TO RESET PASSWORD PAGE AGAIN---"));
+                    return badRequest(views.html.unauthorized.render(UserMessages.ERROR_TOKEN_EXPIRED));
                 case invalidToken:
-                    return badRequest(views.html.unauthorized.render("Invalid token, user doesn't exist or account is not recovering. ---CHANGE THIS ERROR IN THE FUTURE---"));
+                    return badRequest(views.html.unauthorized.render(UserMessages.ERROR_INVALID_TOKEN));
             }
         }
 
@@ -377,10 +372,8 @@ public class AccountController extends Controller {
             return badRequest(views.html.unauthorized.render(printValidationErrors(passwordReset.errors())));
         }
 
-        //TODO add password mismatch warning
-        //TODO should sessions expire?
-        return badRequest(views.html.unauthorized.render("Passwords do not match or there is an error with the password"));
-        //TODO email setup. Send the password reset token to the requested email
+        return badRequest(views.html.unauthorized.render("ERROR"));
+
     }
 
     //Checks if a password reset request is allowed
@@ -408,7 +401,7 @@ public class AccountController extends Controller {
                     } else {
                         return passwordTokenAuthorizeResult.tokenExpired;
                     }
-                    //Invalid user or token
+                //Invalid user or token
                 } else {
                     return passwordTokenAuthorizeResult.invalidToken;
                 }

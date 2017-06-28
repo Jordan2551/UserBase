@@ -15,10 +15,6 @@ import java.util.Objects;
  */
 public class CreateUser {
 
-    public static final String ERROR_USER_EXISTS = "The email provided is already in use";
-    public static final String ERROR_PASSWORD_MISMATCH = "The passwords do not match or not required length or user is not long enough FIX";
-    public static final String USER_CREATE_SUCCESS = "User successfully created!";
-
     @Constraints.Required(message = "Email field is required")
     @Constraints.Email(message = "Please provide a valid email address")
     private String username;

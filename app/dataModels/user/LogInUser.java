@@ -12,7 +12,6 @@ import java.util.Objects;
  */
 public class LogInUser {
 
-    public static final String ERROR_USER_OR_PASSWORD_INVALID = "The username or password provided is invalid";
 
     @Constraints.Required(message = "Email field is required")
     @Constraints.Email(message = "You must provide a valid email address")
