@@ -1,7 +1,13 @@
 package dataModels.user;
 
+import com.google.inject.Inject;
 import play.data.validation.Constraints;
+import play.data.validation.ValidationError;
 
+import javax.validation.Constraint;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 
 /**
@@ -9,19 +15,25 @@ import play.data.validation.Constraints;
  */
 public class CreateUser {
 
-    public static final String ERROR_USER_EXISTS = "The username provided already exists";
+    public static final String ERROR_USER_EXISTS = "The email provided is already in use";
     public static final String ERROR_PASSWORD_MISMATCH = "The passwords do not match or not required length or user is not long enough FIX";
     public static final String USER_CREATE_SUCCESS = "User successfully created!";
 
-    @Constraints.Required
-    @Constraints.MinLength(5)
+    @Constraints.Required(message = "Email field is required")
+    @Constraints.Email(message = "Please provide a valid email address")
     private String username;
-    @Constraints.Required
-    @Constraints.MinLength(5)
+    @Constraints.Required(message = "Password field is required")
+    @Constraints.MinLength(value = 6, message = "Password must be at least 6 characters long")
     private String password;
-    @Constraints.Required
-    @Constraints.MinLength(5)
     private String confirmPassword;
+
+    public List<ValidationError> validate() {
+        List<ValidationError> errors = new ArrayList<ValidationError>();
+        if (!Objects.equals(password, confirmPassword))
+            errors.add(new ValidationError("password", "The passwords do not match"));
+
+        return errors.isEmpty() ? null : errors;
+    }
 
     public String getUsername() {
         return username;

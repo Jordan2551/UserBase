@@ -19,6 +19,7 @@ public class UsersEntity {
     private int loginAttemptCount;
     private String resetToken;
     private Timestamp resetTokenLife;
+    private String activationToken;
 
     @Id
     @Column(name = "id")
@@ -127,5 +128,15 @@ public class UsersEntity {
 
     public void setResetTokenLife(Timestamp resetTokenLife) {
         this.resetTokenLife = resetTokenLife;
+    }
+
+    @Basic
+    @Column(name = "activationToken")
+    public String getActivationToken() {
+        return activationToken;
+    }
+
+    public void setActivationToken(String activationToken) {
+        this.activationToken = activationToken;
     }
 }

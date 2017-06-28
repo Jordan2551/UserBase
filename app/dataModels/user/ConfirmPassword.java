@@ -1,6 +1,11 @@
 package dataModels.user;
 
 import play.data.validation.Constraints;
+import play.data.validation.ValidationError;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * Created by jorda_000 on 2017-06-21.
@@ -8,12 +13,17 @@ import play.data.validation.Constraints;
  */
 public class ConfirmPassword {
 
-    @Constraints.Required
-    @Constraints.MinLength(5)
+    @Constraints.Required(message = "Password field is required")
     private String password;
-    @Constraints.Required
-    @Constraints.MinLength(5)
+    @Constraints.Required(message = "Confirm password field is required")
     private String confirmPassword;
+
+    public List<ValidationError> validate() {
+        List<ValidationError> errors = new ArrayList<ValidationError>();
+        if (!Objects.equals(password, confirmPassword))
+            errors.add(new ValidationError("password", "The passwords do not match"));
+        return errors.isEmpty() ? null : errors;
+    }
 
     public String getPassword() {
         return password;
