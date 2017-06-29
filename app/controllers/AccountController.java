@@ -26,6 +26,7 @@ import java.util.UUID;
  * Created by jorda on 2017-06-07.
  */
 //TODO SSL WITH MYSQL, HTTPS WHERE NEEDED
+//TODO MYSQL CONNECTION POOL LIMIT?
 //TODO should sessions expire?
 //TODO should I only create the account after the code is verified? IS that even possibly given that the data has to exist somewhere. Maybe add a task that clears inactivated users after a certain timeframe OR the ability to resend a new token
 //TODO make more elegant with flexible data binds
