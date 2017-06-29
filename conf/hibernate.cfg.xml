@@ -9,13 +9,13 @@
             org.hibernate.dialect.MySQLDialect
         </property>
         <property name="hibernate.connection.driver_class">com.mysql.jdbc.Driver</property>
-        <property name="hibernate.connection.url">jdbc:mysql://localhost:3306/userbase_db?useSSL=true</property>
+        <property name="hibernate.connection.url">jdbc:mysql://us-cdbr-iron-east-03.cleardb.net/heroku_54c73b527d33392?useSSL=true</property>
         <!-- Assume test is the database name -->
         <property name="hibernate.connection.username">
-            root
+            baea5d4f48bf4e
         </property>
         <property name="hibernate.connection.password">
-            root
+            c2e9dba5
         </property>
 
         <!-- List of XML mapping files -->

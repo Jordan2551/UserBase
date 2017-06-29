@@ -10,7 +10,7 @@
       <properties>
       <property name="hibernate.dialect" value="org.hibernate.dialect.H2Dialect"/>
       <property name="hibernate.hbm2ddl.auto" value="update"/>
-          <property name="toplink.jdbc.url" value="jdbc:mysql://localhost:3306/userbase_db"/>
+          <property name="toplink.jdbc.url" value="jdbc:mysql://us-cdbr-iron-east-03.cleardb.net:3306/heroku_54c73b527d33392"/>
           <property name="toplink.jdbc.driver" value="com.mysql.jdbc.Driver"/>
           <property name="hibernate.connection.url" value="jdbc:mysql://localhost:3306/userbase_db"/>
           <property name="hibernate.connection.driver_class" value="com.mysql.jdbc.Driver"/>

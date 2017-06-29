@@ -9,7 +9,7 @@ import java.sql.Timestamp;
  * Created by jorda on 2017-06-07.
  */
 @Entity
-@Table(name = "users", schema = "userbase_db", catalog = "")
+@Table(name = "users", schema = "heroku_54c73b527d33392", catalog = "")
 public class UsersEntity {
     private long id;
     private String username;
