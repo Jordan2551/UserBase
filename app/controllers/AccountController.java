@@ -72,7 +72,7 @@ public class AccountController extends Controller {
                 //Check that the email is not already being used in the database
                 for (UsersEntity userFromDB : usersFromDB) {
                     if (Objects.equals(userFromDB.getUsername().toLowerCase(), userForm.get().getUsername().toLowerCase())) {
-                        return badRequest(views.html.index.render(UserMessages.ERROR_ACCOUNT_DOESNT_EXIST));
+                        return badRequest(views.html.index.render(UserMessages.ERROR_EMAIL_EXISTS));
                     }
                 }
 
