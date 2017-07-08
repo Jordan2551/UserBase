@@ -15,8 +15,6 @@ public class UserMessages {
     public static final String ERROR_TOKEN_EXPIRED = "The password reset token has expried. Please request to reset your password again";
     public static final String ERROR_INVALID_TOKEN = "The password reset token is invalid";
 
-
-
     public static final String USER_CREATE_SUCCESS = "User successfully created!";
     public static final String USER_PASSWORD_RESET_REQUEST = "Password change request sent! Please check your email";
     public static final String USER_ACCOUNT_ACTIVATED_SUCCESS = "Account successfully activated";

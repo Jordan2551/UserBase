@@ -5,7 +5,7 @@
 # An example controller showing a sample home page
 GET         /                    controllers.HomeController.index()
 POST        /create              controllers.AccountController.createAccount()
-GET        /activate/:token/:id controllers.AccountController.activateAccount(token: String, id: Long)
+GET         /activate/:token/:id controllers.AccountController.activateAccount(token: String, id: Long)
 GET         /login               controllers.AccountController.logIn()
 POST        /login               controllers.AccountController.authenticate()
 GET         /settings            controllers.AccountController.userSettings()

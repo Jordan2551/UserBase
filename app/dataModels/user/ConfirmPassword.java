@@ -14,6 +14,7 @@ import java.util.Objects;
 public class ConfirmPassword {
 
     @Constraints.Required(message = "Password field is required")
+    @Constraints.MaxLength(value = 18, message = "Password must be no longer than 18 characters long")
     private String password;
     @Constraints.Required(message = "Confirm password field is required")
     private String confirmPassword;

@@ -1,6 +1,11 @@
 package controllers;
 
 import com.google.inject.Inject;
+import controllers.*;
+import controllers.routes;
+import play.mvc.Http;
+import play.mvc.Security;
+import security.BCrypt;
 import dataModels.user.*;
 import database.DB;
 import emails.SendGridEmail;
@@ -13,6 +18,7 @@ import play.data.FormFactory;
 import play.data.validation.ValidationError;
 import play.mvc.Controller;
 import play.mvc.Result;
+import security.Secured;
 
 import java.math.BigInteger;
 import java.security.SecureRandom;
@@ -20,7 +26,6 @@ import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.UUID;
 
 /**
  * Created by jorda on 2017-06-07.
@@ -39,11 +44,8 @@ public class AccountController extends Controller {
 
     private final FormFactory formFactory;
     private Transaction tx = null;
-    private UsersEntity loggedInUser;
 
-    public UsersEntity getLoggedInUser() {
-        return loggedInUser;
-    }
+    public Secured security = new Secured();
 
     @Inject
     public AccountController(final FormFactory formFactory) {
@@ -85,9 +87,9 @@ public class AccountController extends Controller {
                 user.setActivated(false);//If not created through social media
                 user.setRecovering(false);
                 user.setLoginAttemptCount(0);
-                user.setPassword(controllers.BCrypt.hashpw(userForm.get().getPassword(), controllers.BCrypt.gensalt()));
+                user.setPassword(BCrypt.hashpw(userForm.get().getPassword(), BCrypt.gensalt()));
                 user.setResetToken("");
-                user.setActivationToken(controllers.BCrypt.hashpw(token, controllers.BCrypt.gensalt()));
+                user.setActivationToken(BCrypt.hashpw(token, BCrypt.gensalt()));
 
                 DBSession.save(user);
                 DBSession.flush();
@@ -151,30 +153,20 @@ public class AccountController extends Controller {
         return badRequest(views.html.index.render("Error"));
     }
 
-
     public Result logIn() {
         //If someone accesses the log in page after being logged in then log them out
-        if (isLoggedIn()) {
+        // request() = Returns the current HTTP request.
+        if (request().username() != null) {
             logOut();
         }
-        return ok(views.html.login.render("Please provide your credentials"));
+        return ok(views.html.login.render());
     }
 
-    public void setLoggedInUser(UsersEntity loggedInUser) {
-        session("id", String.valueOf(loggedInUser.getId()));
-        session("username", String.valueOf(loggedInUser.getUsername()));
-        session("isActivated", String.valueOf(loggedInUser.isActivated()));
-        session("isRecovering", String.valueOf(loggedInUser.isRecovering()));
-        session("loginAttemptCount", String.valueOf(loggedInUser.getLoginAttemptCount()));
-    }
-
-    public static boolean isLoggedIn() {
-        return session().get("id") != null;
-    }
-
-    public void logOut() {
+    public Result logOut() {
         //Discard the logged out user's session.
         session().clear();
+        flash("success", "You've been logged out");
+        return redirect(routes.AccountController.logIn());
     }
 
     //Determines user access
@@ -197,14 +189,14 @@ public class AccountController extends Controller {
 
                 if (userFromDB.size() > 0 && BCrypt.checkpw(userForm.get().getPassword(), userFromDB.get(0).getPassword())) {
                     if (userFromDB.get(0).isActivated()) {
-                        setLoggedInUser(userFromDB.get(0));
+                        session("email", userFromDB.get(0).getUsername());
                         return userSettings();
                     } else
-                        return badRequest(views.html.login.render(UserMessages.ERROR_ACCOUNT_NOT_ACTIVATED));
-                }
-
-                else{
-                    return badRequest(views.html.login.render(UserMessages.ERROR_USER_OR_PASSWORD_INVALID));
+                        flash("error", UserMessages.ERROR_ACCOUNT_NOT_ACTIVATED);
+                    return redirect(routes.AccountController.logIn());
+                } else {
+                    flash("error", UserMessages.ERROR_USER_OR_PASSWORD_INVALID);
+                    return redirect(routes.AccountController.logIn());
                 }
 
             } catch (HibernateException e) {
@@ -214,28 +206,21 @@ public class AccountController extends Controller {
                 DBSession.close();
             }
 
+        } else {
+            flash("error", printValidationErrors(userForm.errors()));
+            return redirect(routes.AccountController.logIn());
         }
 
-        else{
-            return badRequest(views.html.login.render(printValidationErrors(userForm.errors())));
-        }
-
-        return badRequest(views.html.login.render("Error"));
+        return badRequest(views.html.login.render());
     }
 
+    //Attribute to assure a user is logged in before calling this request
+    @Security.Authenticated(Secured.class)
     public Result userSettings() {
-
-        //User persistence
-        String username = session().get("username");
-        if (username != null) {
-            return ok(views.html.user_settings.render(username));
-        }
-        return badRequest(views.html.unauthorized.render(UserMessages.ERROR_NO_ACCESS));
+        return ok(views.html.user_settings.render(security.getUsername(Http.Context.current())));
     }
 
     public Result passwordReset1() {
-        // if (isLoggedIn())
-        // return badRequest(views.html.unauthorized.render("You are already logged in"));
         return ok(views.html.request_reset.render());
     }
 
@@ -259,7 +244,7 @@ public class AccountController extends Controller {
 
                 if (userFromDB.size() != 0) {
 
-                    if(userFromDB.get(0).isActivated()) {
+                    if (userFromDB.get(0).isActivated()) {
                         //TODO: check that this is sufficient. How does this work?
                         //Generate a random token
                         SecureRandom random = new SecureRandom();
@@ -270,7 +255,7 @@ public class AccountController extends Controller {
                         if (SendGridEmail.sendPasswordRequestEmail(userFromDB.get(0).getUsername(), token, userFromDB.get(0).getId())) {
 
                             tx = DBSession.beginTransaction();
-                            userFromDB.get(0).setResetToken(controllers.BCrypt.hashpw(token, controllers.BCrypt.gensalt()));
+                            userFromDB.get(0).setResetToken(BCrypt.hashpw(token, BCrypt.gensalt()));
                             userFromDB.get(0).setResetTokenLife(new Timestamp(System.currentTimeMillis() + 21600000));
                             userFromDB.get(0).setRecovering(true);
                             DBSession.saveOrUpdate(userFromDB.get(0));
@@ -280,8 +265,7 @@ public class AccountController extends Controller {
                             return badRequest(views.html.unauthorized.render(UserMessages.USER_PASSWORD_RESET_REQUEST));
 
                         }
-                    }
-                    else{
+                    } else {
                         return badRequest(views.html.unauthorized.render(UserMessages.ERROR_ACCOUNT_NOT_ACTIVATED));
                     }
 
@@ -295,9 +279,7 @@ public class AccountController extends Controller {
             } finally {
                 DBSession.close();
             }
-        }
-
-        else{
+        } else {
             return badRequest(views.html.unauthorized.render(printValidationErrors(emailRequest.errors())));
         }
 
@@ -367,9 +349,7 @@ public class AccountController extends Controller {
                 case invalidToken:
                     return badRequest(views.html.unauthorized.render(UserMessages.ERROR_INVALID_TOKEN));
             }
-        }
-
-        else{
+        } else {
             return badRequest(views.html.unauthorized.render(printValidationErrors(passwordReset.errors())));
         }
 
@@ -402,7 +382,7 @@ public class AccountController extends Controller {
                     } else {
                         return passwordTokenAuthorizeResult.tokenExpired;
                     }
-                //Invalid user or token
+                    //Invalid user or token
                 } else {
                     return passwordTokenAuthorizeResult.invalidToken;
                 }
@@ -417,7 +397,7 @@ public class AccountController extends Controller {
         return passwordTokenAuthorizeResult.error;
     }
 
-    private String printValidationErrors(Map<String,List<ValidationError>> formToValidate) {
+    private String printValidationErrors(Map<String, List<ValidationError>> formToValidate) {
 
         String errorMsg = "";
 

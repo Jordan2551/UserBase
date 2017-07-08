@@ -17,9 +17,11 @@ public class CreateUser {
 
     @Constraints.Required(message = "Email field is required")
     @Constraints.Email(message = "Please provide a valid email address")
+    @Constraints.MaxLength(value = 30, message = "Email must be no longer than 30 characters long")
     private String username;
     @Constraints.Required(message = "Password field is required")
     @Constraints.MinLength(value = 6, message = "Password must be at least 6 characters long")
+    @Constraints.MaxLength(value = 18, message = "Password must be no longer than 18 characters long")
     private String password;
     private String confirmPassword;
 

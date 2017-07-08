@@ -1,5 +1,6 @@
 package controllerTests;
 
+import security.BCrypt;
 import database.DB;
 import models.UsersEntity;
 import org.hibernate.HibernateException;
@@ -25,7 +26,7 @@ public class AccountControllerTest {
         user.setRecovering(false);
         user.setLoginAttemptCount(0);
         //TODO password encryption
-        user.setPassword(controllers.BCrypt.hashpw("pizzapocket", controllers.BCrypt.gensalt()));
+        user.setPassword(BCrypt.hashpw("pizzapocket", BCrypt.gensalt()));
 
         try {
 

@@ -10,6 +10,7 @@ public class RecoverUser {
 
     @Constraints.Required(message = "Email field is required")
     @Constraints.Email(message = "You must provide a valid email address")
+    @Constraints.MaxLength(value = 30, message = "Email must be no longer than 30 characters long")
     private String username;
 
     public String getUsername() {
